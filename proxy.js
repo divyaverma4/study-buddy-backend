@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const API_KEY = process.env.WORDS_API_KEY;
-const API_HOST = 'https://wordsapiv1.p.rapidapi.com/words/';
+const API_HOST = 'wordsapiv1.p.rapidapi.com/words/';
 
 app.use(cors()); // Allow frontend to access
 app.use(express.json());
@@ -17,11 +17,12 @@ app.get('/api/word/:word', async (req, res) => {
 
   try {
     const response = await fetch(`https://${API_HOST}/words/${word}`, {
-      headers: {
-        'X-RapidAPI-Key': API_KEY,
-        'X-RapidAPI-Host': API_HOST
-      }
-    });
+  headers: {
+    'X-RapidAPI-Key': API_KEY,
+    'X-RapidAPI-Host': API_HOST
+  }
+});
+
 
     const data = await response.json();
     res.json(data);
