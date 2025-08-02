@@ -1,4 +1,5 @@
 // proxy.js
+require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch'); // if using Node <18
 const cors = require('cors');
