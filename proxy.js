@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 const API_KEY = process.env.WORDS_API_KEY;
-const API_HOST = 'wordsapiv1.p.rapidapi.com/words/';
+const API_HOST = 'wordsapiv1.p.rapidapi.com';
 
 app.use(cors()); // Allow frontend to access
 app.use(express.json());
