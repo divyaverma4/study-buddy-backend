@@ -16,10 +16,10 @@ app.get('/api/word/:word', async (req, res) => {
   const word = req.params.word;
 
   try {
-    const response = await fetch(`https://${API_HOST}/words/${word}`, {
+    const response = await fetch(`https://${API_HOST}/words/${word}/definitions`, {
   headers: {
-    'X-RapidAPI-Key': API_KEY,
-    'X-RapidAPI-Host': API_HOST
+    'X-RapidAPI-Host': 'wordsapiv1.p.rapidapi.com',
+    'X-RapidAPI-Key': API_KEY
   }
 });
 
