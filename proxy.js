@@ -33,30 +33,34 @@ app.get('/api/vocab', async (req, res) => {
   console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
 
   const prompt = `
-Generate a JSON array of 100 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
-Example output format:
-["abate", "aberration", "abhor", "accolade", "acrimony", ...]
-  `;
+Return ONLY a valid JSON array (no extra text) of exactly 100 of the most common SAT or ACT vocabulary words.
+Each word must be a string in the array.
+Example format:
+["abate", "aberration", "abhor", "accolade", "acrimony"]
+`;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You provide vocabulary lists." },
+        { role: "system", content: "You provide clean JSON lists of vocabulary words only." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.3,
-      max_tokens: 150,
+      temperature: 0.2,
+      max_tokens: 500, // increased so it can fit 100 words
     });
 
-    const aiText = response.choices[0]?.message?.content || "";
+    const aiText = response.choices[0]?.message?.content?.trim() || "";
     console.log("[OpenAI] Raw vocab list response:", aiText);
 
     let vocabList;
     try {
       vocabList = JSON.parse(aiText);
+      if (!Array.isArray(vocabList)) {
+        throw new Error("Response is not an array");
+      }
     } catch (err) {
-      console.error("[OpenAI] Failed to parse vocab list JSON:", aiText);
+      console.error("[OpenAI] Failed to parse vocab list JSON:", err);
       return res.status(500).json({ error: "Failed to parse vocab list JSON", raw: aiText });
     }
 
@@ -66,6 +70,8 @@ Example output format:
     res.status(500).json({ error: "Failed to generate vocab list", details: error.message });
   }
 });
+
+
 
 
 // ======== OpenAI Definition Route ========
