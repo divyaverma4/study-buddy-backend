@@ -34,32 +34,37 @@ app.get('/api/vocab', async (req, res) => {
   console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
 
   const prompt = `
-Generate a JSON array of exactly 100 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
-Format your output exactly like this:
-["abate", "aberration", "abhor", "accolade", "acrimony", ...]
-Do not include explanations, numbers, or any other text outside the JSON array.
-  `;
+Return ONLY a valid JSON array (no extra text) of exactly 100 of the most common SAT or ACT vocabulary words.
+Each word must be a string in the array.
+Example format:
+["abate", "aberration", "abhor", "accolade", "acrimony"]
+`;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You provide vocabulary lists in JSON array format." },
+        { role: "system", content: "You provide clean JSON lists of vocabulary words only." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.3,
-      max_tokens: 400, // allow enough tokens for 100 words
+      temperature: 0.2,
+      max_tokens: 800, // increased token limit
     });
 
-    const aiText = response.choices[0]?.message?.content?.trim() || "";
+    let aiText = response.choices[0]?.message?.content?.trim() || "";
     console.log("[OpenAI] Raw vocab list response:", aiText);
 
     let vocabList;
     try {
       vocabList = JSON.parse(aiText);
-      if (!Array.isArray(vocabList)) throw new Error("Not an array");
+      if (typeof vocabList === "string") {
+        vocabList = JSON.parse(vocabList);  // double parse for stringified JSON
+      }
+      if (!Array.isArray(vocabList)) {
+        throw new Error("Response is not an array");
+      }
     } catch (err) {
-      console.error("[OpenAI] Failed to parse vocab list JSON:", aiText);
+      console.error("[OpenAI] Failed to parse vocab list JSON:", err);
       return res.status(500).json({ error: "Failed to parse vocab list JSON", raw: aiText });
     }
 
@@ -69,6 +74,7 @@ Do not include explanations, numbers, or any other text outside the JSON array.
     res.status(500).json({ error: "Failed to generate vocab list", details: error.message });
   }
 });
+
 
 
 // ======== OpenAI Definition Route ========
