@@ -21,33 +21,34 @@ console.log("============================");
 app.use(cors());
 app.use(express.json());
 
-// Global request logger
-app.use((req, res, next) => {
-  console.log(`[DEBUG] Incoming request: ${req.method} ${req.url}`);
-  console.log('[DEBUG] Request headers:', req.headers);
-  next();
+// OpenAI client
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
 });
+
+// Cache for vocab list
+let cachedVocabList = null;
 
 // ======== OpenAI Vocab List Generation Route ========
 app.get('/api/vocab', async (req, res) => {
   console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
 
   const prompt = `
-Return ONLY a valid JSON array (no extra text) of exactly 100 of the most common SAT or ACT vocabulary words.
-Each word must be a string in the array.
-Example format:
-["abate", "aberration", "abhor", "accolade", "acrimony"]
-`;
+Generate a JSON array of exactly 100 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
+Format your output exactly like this:
+["abate", "aberration", "abhor", "accolade", "acrimony", ...]
+Do not include explanations, numbers, or any other text outside the JSON array.
+  `;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You provide clean JSON lists of vocabulary words only." },
+        { role: "system", content: "You provide vocabulary lists in JSON array format." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.2,
-      max_tokens: 500, // increased so it can fit 100 words
+      temperature: 0.3,
+      max_tokens: 400, // allow enough tokens for 100 words
     });
 
     const aiText = response.choices[0]?.message?.content?.trim() || "";
@@ -56,11 +57,9 @@ Example format:
     let vocabList;
     try {
       vocabList = JSON.parse(aiText);
-      if (!Array.isArray(vocabList)) {
-        throw new Error("Response is not an array");
-      }
+      if (!Array.isArray(vocabList)) throw new Error("Not an array");
     } catch (err) {
-      console.error("[OpenAI] Failed to parse vocab list JSON:", err);
+      console.error("[OpenAI] Failed to parse vocab list JSON:", aiText);
       return res.status(500).json({ error: "Failed to parse vocab list JSON", raw: aiText });
     }
 
@@ -70,8 +69,6 @@ Example format:
     res.status(500).json({ error: "Failed to generate vocab list", details: error.message });
   }
 });
-
-
 
 
 // ======== OpenAI Definition Route ========
@@ -109,7 +106,6 @@ Respond with JSON in this format:
       defObj = JSON.parse(aiText);
     } catch (err) {
       console.error("[OpenAI] Failed to parse definition JSON:", aiText);
-      // Fallback: send plain text definition
       return res.json({
         word,
         definition: aiText.replace(/\n/g, " ").trim() || "Definition unavailable."
@@ -124,45 +120,7 @@ Respond with JSON in this format:
   }
 });
 
-
-// ======== WordsAPI Definition Route ========
-/*
-app.get('/api/word/:word', async (req, res) => {
-  const word = req.params.word;
-  console.log(`[WordsAPI] Incoming request for word: ${word}`);
-
-  try {
-    console.log("[WordsAPI] Sending request to RapidAPI...");
-    const response = await fetch(`https://${WORDS_API_HOST}/words/${word}/definitions`, {
-      headers: {
-        'X-RapidAPI-Host': WORDS_API_HOST,
-        'X-RapidAPI-Key': WORDS_API_KEY
-      }
-    });
-
-    console.log(`[WordsAPI] HTTP status: ${response.status}`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[WordsAPI] API returned error:", errorText);
-      return res.status(response.status).json({ error: 'WordsAPI request failed', details: errorText });
-    }
-
-    const data = await response.json();
-    console.log("[WordsAPI] Response data received:", data);
-    res.json(data);
-
-  } catch (error) {
-    console.error('[WordsAPI] Error fetching word data:', error);
-    res.status(500).json({ error: 'Failed to fetch word data', details: error.message });
-  }
-});
-*/
-
 // ======== OpenAI Quiz Generation Route ========
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
-
 app.get('/api/quiz/:word', async (req, res) => {
   const word = req.params.word;
   console.log(`[OpenAI] Incoming quiz generation request for word: ${word}`);
@@ -190,7 +148,6 @@ Format your response as JSON like this:
 `;
 
   try {
-    console.log("[OpenAI] Sending request to API...");
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -200,9 +157,6 @@ Format your response as JSON like this:
       temperature: 0.3,
       max_tokens: 300,
     });
-
-    console.log("[OpenAI] API call complete.");
-    console.log("[OpenAI] Raw API response:", JSON.stringify(response, null, 2));
 
     const aiText = response.choices[0]?.message?.content || "";
     console.log("[OpenAI] Extracted text:", aiText);
@@ -215,7 +169,6 @@ Format your response as JSON like this:
       return res.status(500).json({ error: 'Failed to parse AI response JSON', raw: aiText });
     }
 
-    console.log("[OpenAI] Final quiz JSON:", quizQuestion);
     res.json(quizQuestion);
 
   } catch (error) {
