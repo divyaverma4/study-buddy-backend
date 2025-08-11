@@ -132,7 +132,14 @@ app.get('/api/quiz/:word', async (req, res) => {
   console.log(`[OpenAI] Incoming quiz generation request for word: ${word}`);
 
   const prompt = `
-Generate a multiple-choice question for the SAT word "${word}". 
+  Which of the following sentences uses the word "abate" correctly?
+
+A) The storm began to abate, and the skies slowly cleared.
+B) She abated the delicious cake by eating it all in one bite.
+C) He abated his homework before going to the party.
+D) The teacher asked the students to abate the music during the test.
+
+Generate a multiple-choice question for the vocab word "${word}". 
 Include:
 - a question sentence,
 - four answer options labeled A, B, C, D,
@@ -142,14 +149,14 @@ Include:
 Format your response as JSON like this:
 
 {
-  "question": "What is the best definition of 'abate'?",
+  "question": "Which sentence correctly uses the word 'abate'?",
   "options": {
-    "A": "To increase in intensity",
-    "B": "To become less intense",
-    "C": "To confuse or perplex",
-    "D": "To support or encourage"
+    "A": "The storm began to abate, and the skies slowly cleared.",
+    "B": "She abated the delicious cake by eating it all in one bite.",
+    "C": "He abated his homework before going to the party.",
+    "D": "The teacher asked the students to abate the music during the test."
   },
-  "correctAnswer": "B"
+  "correctAnswer": "A"
 }
 `;
 
