@@ -28,6 +28,46 @@ app.use((req, res, next) => {
   next();
 });
 
+// ======== OpenAI Vocab List Generation Route ========
+app.get('/api/vocab-list', async (req, res) => {
+  console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
+
+  const prompt = `
+Generate a JSON array of 50 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
+Example output format:
+["abate", "aberration", "abhor", "accolade", "acrimony", ...]
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You provide vocabulary lists." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 150,
+    });
+
+    const aiText = response.choices[0]?.message?.content || "";
+    console.log("[OpenAI] Raw vocab list response:", aiText);
+
+    let vocabList;
+    try {
+      vocabList = JSON.parse(aiText);
+    } catch (err) {
+      console.error("[OpenAI] Failed to parse vocab list JSON:", aiText);
+      return res.status(500).json({ error: "Failed to parse vocab list JSON", raw: aiText });
+    }
+
+    res.json({ words: vocabList });
+  } catch (error) {
+    console.error("[OpenAI] Error generating vocab list:", error);
+    res.status(500).json({ error: "Failed to generate vocab list", details: error.message });
+  }
+});
+
+
 // ======== OpenAI Definition Route ========
 app.get('/api/word/:word', async (req, res) => {
   const word = req.params.word;
