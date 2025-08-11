@@ -28,7 +28,59 @@ app.use((req, res, next) => {
   next();
 });
 
+// ======== OpenAI Definition Route ========
+app.get('/api/word/:word', async (req, res) => {
+  const word = req.params.word;
+  console.log(`[OpenAI] Incoming definition request for word: ${word}`);
+
+  const prompt = `
+Provide a clear, concise dictionary-style definition for the SAT vocabulary word "${word}". 
+Keep the definition brief and suitable for a student studying for the SAT.
+Respond with JSON in this format:
+
+{
+  "word": "${word}",
+  "definition": "The definition here."
+}
+`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You provide dictionary definitions for SAT words." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 100,
+    });
+
+    const aiText = response.choices[0]?.message?.content || "";
+    console.log("[OpenAI] Raw definition response:", aiText);
+
+    let defObj;
+    try {
+      defObj = JSON.parse(aiText);
+    } catch (err) {
+      console.error("[OpenAI] Failed to parse definition JSON:", aiText);
+      // Fallback: send plain text definition
+      return res.json({
+        word,
+        definition: aiText.replace(/\n/g, " ").trim() || "Definition unavailable."
+      });
+    }
+
+    res.json(defObj);
+
+  } catch (error) {
+    console.error('[OpenAI] Error generating definition:', error);
+    res.status(500).json({ error: 'Failed to generate definition', details: error.message });
+  }
+});
+
+
 // ======== WordsAPI Definition Route ========
+/*
 app.get('/api/word/:word', async (req, res) => {
   const word = req.params.word;
   console.log(`[WordsAPI] Incoming request for word: ${word}`);
@@ -58,6 +110,7 @@ app.get('/api/word/:word', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch word data', details: error.message });
   }
 });
+*/
 
 // ======== OpenAI Quiz Generation Route ========
 const openai = new OpenAI({
