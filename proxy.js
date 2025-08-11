@@ -29,11 +29,11 @@ app.use((req, res, next) => {
 });
 
 // ======== OpenAI Vocab List Generation Route ========
-app.get('/api/vocab-list', async (req, res) => {
+app.get('/api/vocab', async (req, res) => {
   console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
 
   const prompt = `
-Generate a JSON array of 50 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
+Generate a JSON array of 100 common SAT or ACT vocabulary words suitable for high school students preparing for the exam.
 Example output format:
 ["abate", "aberration", "abhor", "accolade", "acrimony", ...]
   `;
