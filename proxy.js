@@ -34,7 +34,7 @@ app.get('/api/vocab', async (req, res) => {
   console.log("[OpenAI] Incoming request for SAT/ACT vocab list");
 
   const prompt = `
-Return ONLY a valid JSON array (no extra text) of exactly 70 of the most common SAT or ACT vocabulary words. 
+Return ONLY a valid JSON array (no extra text) of exactly 50 of the most common SAT or ACT vocabulary words. 
 Each word must be a string in the array.
 Example format:
 ["abate", "acrimony", "benevolent", "disdain", "dissonance"]
