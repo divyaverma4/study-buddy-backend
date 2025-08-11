@@ -1,14 +1,52 @@
+
 require('dotenv').config();
 const express = require('express');
-const fetch = require('node-fetch'); // For Node <18
+const fetch = require('node-fetch'); // Needed if Node <18
 const cors = require('cors');
-const OpenAI = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const API_KEY = process.env.WORDS_API_KEY;
+const API_HOST = 'wordsapiv1.p.rapidapi.com';
 
-const WORDS_API_KEY = process.env.WORDS_API_KEY;
-const WORDS_API_HOST = 'wordsapiv1.p.rapidapi.com';
+// Global request logger
+app.use((req, res, next) => {
+  console.log(`[DEBUG] Incoming request: ${req.method} ${req.url}`);
+  console.log('[DEBUG] Request headers:', req.headers);
+  next();
+});
+
+app.use(cors());
+
+app.get('/api/word', async (req, res) => {
+  console.log('[DEBUG] /api/word route hit');
+
+  try {
+    console.log('[DEBUG] Sending request to WordsAPI...');
+    const response = await fetch(`https://${API_HOST}/words/abase`, {
+      headers: {
+        'X-RapidAPI-Key': API_KEY,
+        'X-RapidAPI-Host': API_HOST
+      }
+    });
+
+    console.log('[DEBUG] WordsAPI status:', response.status);
+
+    const data = await response.json();
+    console.log('[DEBUG] WordsAPI data:', data);
+
+    res.json(data);
+  } catch (err) {
+    console.error('[ERROR] Fetch failed:', err);
+    res.status(500).json({ error: 'Failed to fetch word data' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`[DEBUG] Proxy server running on port ${PORT}`);
+});
+
+
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -119,5 +157,5 @@ Format your response as JSON like this:
 
 // ========== Start Server ==========
 app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
+  console.log(`Proxy server running on http://localhost:3001`);
 });
