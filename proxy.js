@@ -1,4 +1,17 @@
-const OpenAI = require("openai");
+require('dotenv').config();
+
+const express = require('express');
+const fetch = require('node-fetch');
+const cors = require('cors');
+const OpenAI = require('openai');
+
+const WORDS_API_KEY = process.env.WORDS_API_KEY;
+const WORDS_API_HOST = 'wordsapiv1.p.rapidapi.com';
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+
+console.log("WORDS_API_KEY loaded?", !!WORDS_API_KEY); // debugging
+console.log("OPENAI_API_KEY loaded?", !!OPENAI_API_KEY); // debugging
 
 
 require('dotenv').config();
