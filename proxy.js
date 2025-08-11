@@ -14,10 +14,7 @@ console.log("WORDS_API_KEY loaded?", !!WORDS_API_KEY); // debugging
 console.log("OPENAI_API_KEY loaded?", !!OPENAI_API_KEY); // debugging
 
 
-require('dotenv').config();
-const express = require('express');
-const fetch = require('node-fetch'); // Needed if Node <18
-const cors = require('cors');
+
 
 const app = express();
 const PORT = process.env.PORT || 3001;
