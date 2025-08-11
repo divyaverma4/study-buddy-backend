@@ -1,25 +1,25 @@
 require('dotenv').config();
 
 const express = require('express');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Needed if Node <18
 const cors = require('cors');
 const OpenAI = require('openai');
 
+const app = express();
+
+const PORT = process.env.PORT || 3001;
 const WORDS_API_KEY = process.env.WORDS_API_KEY;
 const WORDS_API_HOST = 'wordsapiv1.p.rapidapi.com';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+console.log("=== SERVER STARTUP DEBUG ===");
+console.log("WORDS_API_KEY loaded?", !!WORDS_API_KEY);
+console.log("OPENAI_API_KEY loaded?", !!OPENAI_API_KEY);
+console.log(`Server starting on PORT ${PORT}`);
+console.log("============================");
 
-console.log("WORDS_API_KEY loaded?", !!WORDS_API_KEY); // debugging
-console.log("OPENAI_API_KEY loaded?", !!OPENAI_API_KEY); // debugging
-
-
-
-
-const app = express();
-const PORT = process.env.PORT || 3001;
-const API_KEY = process.env.WORDS_API_KEY;
-const API_HOST = 'wordsapiv1.p.rapidapi.com';
+app.use(cors());
+app.use(express.json());
 
 // Global request logger
 app.use((req, res, next) => {
@@ -28,53 +28,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors());
-
-app.get('/api/word', async (req, res) => {
-  console.log('[DEBUG] /api/word route hit');
-
-  try {
-    console.log('[DEBUG] Sending request to WordsAPI...');
-    const response = await fetch(`https://${API_HOST}/words/abase`, {
-      headers: {
-        'X-RapidAPI-Key': API_KEY,
-        'X-RapidAPI-Host': API_HOST
-      }
-    });
-
-    console.log('[DEBUG] WordsAPI status:', response.status);
-
-    const data = await response.json();
-    console.log('[DEBUG] WordsAPI data:', data);
-
-    res.json(data);
-  } catch (err) {
-    console.error('[ERROR] Fetch failed:', err);
-    res.status(500).json({ error: 'Failed to fetch word data' });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`[DEBUG] Proxy server running on port ${PORT}`);
-});
-
-
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-app.use(cors());
-app.use(express.json());
-
-// ========== Debug Info on Startup ==========
-console.log("=== SERVER STARTUP DEBUG ===");
-console.log("WORDS_API_KEY loaded?", !!WORDS_API_KEY);
-console.log("OPENAI_API_KEY loaded?", !!process.env.OPENAI_API_KEY);
-console.log(`Server starting on PORT ${PORT}`);
-console.log("============================");
-
-// ========== Route 1: WordsAPI Definition ==========
+// ======== WordsAPI Definition Route ========
 app.get('/api/word/:word', async (req, res) => {
   const word = req.params.word;
   console.log(`[WordsAPI] Incoming request for word: ${word}`);
@@ -105,7 +59,11 @@ app.get('/api/word/:word', async (req, res) => {
   }
 });
 
-// ========== Route 2: OpenAI Quiz Generation ==========
+// ======== OpenAI Quiz Generation Route ========
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+});
+
 app.get('/api/quiz/:word', async (req, res) => {
   const word = req.params.word;
   console.log(`[OpenAI] Incoming quiz generation request for word: ${word}`);
@@ -167,7 +125,7 @@ Format your response as JSON like this:
   }
 });
 
-// ========== Start Server ==========
+// ======== Start Server ========
 app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:3001`);
+  console.log(`[DEBUG] Proxy server running on http://localhost:${PORT}`);
 });
