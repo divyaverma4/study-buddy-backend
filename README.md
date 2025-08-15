@@ -1,1 +1,1 @@
-# words-around-the-world-backend
+# study buddy backend
